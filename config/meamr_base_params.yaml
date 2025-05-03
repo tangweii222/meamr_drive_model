@@ -1,0 +1,12 @@
+meamr_base_node:
+  ros__parameters:
+    wheel_radius: 0.03
+    track_width: 0.30
+    max_vel_x: 0.6
+    max_vel_theta: 0.9
+    std_dev_x: 0.1
+    std_dev_y: 0.1
+    std_dev_z: 0.1
+    std_dev_roll: 0.1
+    std_dev_pitch: 0.1
+    std_dev_yaw: 0.1
