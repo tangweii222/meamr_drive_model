@@ -35,6 +35,7 @@ endif()
 add_executable(meamr_base_node
   src/meamr_base_node.cpp
   src/meamr_base.cpp         # 這行很重要
+  src/dd_kinematic_model.cpp  
   # src/serial_motors.cpp   # ✅ 要加這個！
   # src/serial_port.cpp    # 如果有的話也加
 )

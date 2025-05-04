@@ -1,4 +1,4 @@
-#include "dd_kinematic_model.h"
+#include "meamr_drive_model/dd_kinematic_model.hpp"
 #include <math.h>
 #include <algorithm>
 
@@ -6,13 +6,14 @@ KinematicModel::KinematicModel()
 {
 }
 
-void KinematicModel::forward_kinematics(float leftMotorRPM, float rightMotorRPM, const VehicleHardwardData &data, double &outLinearVel, double &outAngularVel)
-{ // RPM to rad/sec
-    float lMotorRadPerSec = leftMotorRPM * (2 * M_PI) / 60;
-    float rMotorRadPerSec = rightMotorRPM * (2 * M_PI) / 60;
+void KinematicModel::forward_kinematics(double lMotorRadPerSec, double rMotorRadPerSec, const VehicleHardwardData &data, double &outLinearVel, double &outAngularVel)
+{   
+    // RPM to rad/sec
+    // double lMotorRadPerSec = leftMotorRPM * (2 * M_PI) / 60;
+    // double rMotorRadPerSec = rightMotorRPM * (2 * M_PI) / 60;
 
     double leftVel = 1 * lMotorRadPerSec * data.wheel_radius;
-    double rightVel = -1 * rMotorRadPerSec * data.wheel_radius;
+    double rightVel = 1 * rMotorRadPerSec * data.wheel_radius;
 
     outLinearVel = (leftVel + rightVel) * 0.5;
     outAngularVel = (rightVel - leftVel) / data.track_width;

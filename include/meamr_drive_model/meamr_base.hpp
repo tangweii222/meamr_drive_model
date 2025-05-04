@@ -5,6 +5,8 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "tf2/LinearMath/Quaternion.h"
+#include "dd_kinematic_model.hpp"
+#include "vehicle_hardware_data.h"
 
 // #include "meamr_drive_model/serial_motors.hpp"
 
@@ -77,7 +79,11 @@ private:
      */
     void odomCallback();
 
+    KinematicModel kinematic_model_;
+
+
     // Parameters and Variables
+    VehicleHardwardData hardware_data_;
     double wheel_radius_;       ///< Radius of the wheels (in meters).
     double track_width_;        ///< Distance between the left and right wheels (in meters).
     double gear_ratio_;         ///< Gear ratio of the motor.

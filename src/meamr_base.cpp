@@ -1,4 +1,15 @@
+/**
+ * @file meamr_base.cpp
+ * @brief Implementation of the MeamrBase class, which provides the base functionality for a differential drive robot.
+ * 
+ * - Subscribes to `cmd_vel` topic to convert velocity commands into wheel commands for the communication layer.
+ * - Calculates odometry based on wheel velocities and publishes it to the `odom_raw` topic.
+ * - Updates the robot's state, including position and orientation, based on the differential drive kinematics.
+ */
+
 #include "meamr_drive_model/meamr_base.hpp"
+#include "meamr_drive_model/vehicle_hardware_data.h"
+#include <math.h>
 
 MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from_seconds(0.2)) 
 {
@@ -20,6 +31,13 @@ MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from
     this->get_parameter("track_width", track_width_);
     this->get_parameter("max_vel_x", max_vel_x_);
     this->get_parameter("max_vel_theta", max_vel_theta_);
+
+    // VehicleHardwardData
+    hardware_data_.wheel_radius = wheel_radius_;
+    hardware_data_.track_width = track_width_;
+    hardware_data_.max_linear_vel = max_vel_x_;
+    hardware_data_.max_angular_vel = max_vel_theta_;
+
 
     double std_dev_x, std_dev_y, std_dev_z, std_dev_roll, std_dev_pitch, std_dev_yaw;
     this->get_parameter("std_dev_x", std_dev_x);
@@ -59,10 +77,14 @@ MeamrBase::~MeamrBase()
 void MeamrBase::cmdVelCallback(const geometry_msgs::msg::Twist::ConstSharedPtr &msg)
 {   
     // Clamp the linear and angular velocities to the maximum limits
+    // m/s
+    // rad/s
     des_vel_lin_ = std::clamp(msg->linear.x, -max_vel_x_, max_vel_x_);
     des_vel_theta_ = std::clamp(msg->angular.z, -max_vel_theta_, max_vel_theta_);
 
     // Compute wheel speeds (m/s) then convert to rad/s
+    // 轉速 = 線速度 / 輪徑
+    // rad/s
     des_vel_left_ = (des_vel_lin_ - des_vel_theta_ * track_width_ * 0.5) / wheel_radius_;
     des_vel_right_ = (des_vel_lin_ + des_vel_theta_ * track_width_ * 0.5) / wheel_radius_;
 
@@ -78,7 +100,6 @@ int MeamrBase::Init()
     RCLCPP_INFO(this->get_logger(), "Init() skipped SerialMotor, running in test mode.");
     return 0;
 }
-
 
 int MeamrBase::Stop()
 {
@@ -136,19 +157,18 @@ void MeamrBase::Update()
     last_update_time_ = now_;
     // Get the wheel velocities from the motor controller by UART/I2C
     
-    // 模擬 wheel velocities -> m/s（暫時不讀實際馬達回報）
+    // 模擬 wheel velocities
+    // rad/s
     double left_wheel_vel_ = des_vel_left_;
     double right_wheel_vel_ = des_vel_right_;
-    
+    // Wheel velocities 
+    // m/s
 
-    // Wheel velocities -> m/s
-    double left_vel = left_wheel_vel_ * wheel_radius_;
-    double right_vel = right_wheel_vel_ * wheel_radius_;
-
-
-    // Based on the kinematic model of a differential drive robot to calculate the velocity
-    double lin_vel = (left_vel + right_vel) * 0.5;
-    double theta_vel = (right_vel - left_vel) / track_width_;
+    // Based on kinematic model to calculate the linear and angular velocities of the robot
+    double lin_vel ;
+    double theta_vel;
+    // wheel_vel (rad/s) 
+    kinematic_model_.forward_kinematics(left_wheel_vel_, right_wheel_vel_, hardware_data_, lin_vel, theta_vel);
 
     // Update the wheel position and orientation
     double delta_th = theta_vel * dt_;
