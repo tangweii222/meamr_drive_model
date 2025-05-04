@@ -77,21 +77,19 @@ MeamrBase::~MeamrBase()
 void MeamrBase::cmdVelCallback(const geometry_msgs::msg::Twist::ConstSharedPtr &msg)
 {   
     // Clamp the linear and angular velocities to the maximum limits
-    // m/s
-    // rad/s
-    des_vel_lin_ = std::clamp(msg->linear.x, -max_vel_x_, max_vel_x_);
-    des_vel_theta_ = std::clamp(msg->angular.z, -max_vel_theta_, max_vel_theta_);
+    des_vel_lin_ = std::clamp(msg->linear.x, -max_vel_x_, max_vel_x_);              // m/s
+    des_vel_theta_ = std::clamp(msg->angular.z, -max_vel_theta_, max_vel_theta_);   // rad/s
 
     // Compute wheel speeds (m/s) then convert to rad/s
     // 轉速 = 線速度 / 輪徑
     // rad/s
-    des_vel_left_ = (des_vel_lin_ - des_vel_theta_ * track_width_ * 0.5) / wheel_radius_;
-    des_vel_right_ = (des_vel_lin_ + des_vel_theta_ * track_width_ * 0.5) / wheel_radius_;
+    float left_motor_rpm, right_motor_rpm;
+    kinematic_model_.backward_kinematics(des_vel_lin_, des_vel_theta_, hardware_data_, left_motor_rpm, right_motor_rpm);
 
-    // 發布轉速指令
-    // 🔧 印出左右輪速度（rad/s）
-    // RCLCPP_INFO(this->get_logger(), "Left vel: %.2f rad/s | Right vel: %.2f rad/s", 
-    //             des_vel_left_, des_vel_right_);
+    // Convert RPM back to rad/s for internal use
+    des_vel_left_ = left_motor_rpm * (2 * M_PI) / 60;
+    des_vel_right_ = right_motor_rpm * (2 * M_PI) / 60;
+    
 }
 
 int MeamrBase::Init()

@@ -33,7 +33,7 @@ void KinematicModel::backward_kinematics(double linearVel, double angularVel, co
 
     // linear velocity (m/s) to angular velocity (rad/s)
     desVelLeft /= 1.0 * wheelRadius;
-    desVelRight /= -1.0 * wheelRadius;
+    desVelRight /= 1.0 * wheelRadius;
 
     // rad/s to RPM
     outLeftMotorRPM = desVelLeft * 60 / (2 * M_PI);
