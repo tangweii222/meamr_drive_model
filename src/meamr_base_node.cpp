@@ -9,7 +9,6 @@ int main(int argc, char **argv)
     auto meamr_base = std::make_shared<MeamrBase>();
     auto serial_interface = std::make_shared<SerialInterface>();
 
-    // 將 serial_interface 指給 meamr_base 裡面使用
     meamr_base->setSerialInterface(serial_interface);
 
     if (meamr_base->Init() != 0)
