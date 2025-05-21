@@ -6,6 +6,8 @@ KinematicModel::KinematicModel()
 {
 }
 
+// Input : left and right wheel RPM
+// Output : linear and angular velocity of the robot
 void KinematicModel::forward_kinematics(double lMotorRadPerSec, double rMotorRadPerSec, const VehicleHardwardData &data, double &outLinearVel, double &outAngularVel)
 {   
     // RPM to rad/sec
@@ -19,6 +21,8 @@ void KinematicModel::forward_kinematics(double lMotorRadPerSec, double rMotorRad
     outAngularVel = (rightVel - leftVel) / data.track_width;
 }
 
+// Input : linear and angular velocity of the robot
+// Output : left and right wheel RPM
 void KinematicModel::backward_kinematics(double linearVel, double angularVel, const VehicleHardwardData &data, float &outLeftMotorRPM, float &outRightMotorRPM)
 {
     double trackWidth = data.track_width;

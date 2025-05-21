@@ -13,6 +13,9 @@ find_package(nav_msgs REQUIRED)       #+
 find_package(geometry_msgs REQUIRED)  #+
 find_package(tf2 REQUIRED)            #+    
 find_package(Boost REQUIRED COMPONENTS thread)  #+
+find_package(std_msgs REQUIRED)
+# find_package(serial_driver REQUIRED)
+
 
 
 
@@ -36,19 +39,18 @@ add_executable(meamr_base_node
   src/meamr_base_node.cpp
   src/meamr_base.cpp         # 這行很重要
   src/dd_kinematic_model.cpp  
-  # src/serial_motors.cpp   # ✅ 要加這個！
-  # src/serial_port.cpp    # 如果有的話也加
+  src/serial_interface.cpp
 )
-# target_link_libraries(meamr_base_node
-#   serial
-# )
+
 
 ament_target_dependencies(meamr_base_node
   rclcpp
   geometry_msgs
   nav_msgs
   tf2
+  std_msgs
 )
+
 
 install(TARGETS
   meamr_base_node

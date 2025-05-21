@@ -7,6 +7,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "dd_kinematic_model.hpp"
 #include "vehicle_hardware_data.h"
+#include "serial_interface.hpp"
 
 // #include "meamr_drive_model/serial_motors.hpp"
 
@@ -93,8 +94,8 @@ private:
     double max_vel_x_;          ///< Maximum linear velocity (in m/s).
     double max_vel_theta_;      ///< Maximum angular velocity (in rad/s).
 
-    double des_vel_lin_;        ///< Desired linear velocity (in m/s).
-    double des_vel_theta_;      ///< Desired angular velocity (in rad/s).
+    double des_lin_vel_;        ///< Desired linear velocity (in m/s).
+    double des_theta_vel_;      ///< Desired angular velocity (in rad/s).
     double des_vel_left_;       ///< Desired velocity for the left wheel (in m/s).
     double des_vel_right_;      ///< Desired velocity for the right wheel (in m/s).
 
@@ -124,11 +125,9 @@ private:
 
     // Odometry Message
     nav_msgs::msg::Odometry odom_;                                              ///< Odometry message to be published.
-
-    // Motor Communication
-    // std::shared_ptr<SerialMotor> port_motor_;
     
-
+    // Serial Interface
+    std::shared_ptr<SerialInterface> serial_interface_;                         ///< Serial interface for communication with the robot.
 };
 
 #endif  // MEAMR_BASE_H

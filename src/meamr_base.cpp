@@ -10,6 +10,7 @@
 #include "meamr_drive_model/meamr_base.hpp"
 #include "meamr_drive_model/vehicle_hardware_data.h"
 #include <math.h>
+// #include "meamr_drive_model/serial_interface.hpp"
 
 MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from_seconds(0.2)) 
 {
@@ -66,6 +67,9 @@ MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from
     odom_timer_ = this->create_wall_timer(
         std::chrono::milliseconds(100),
         std::bind(&MeamrBase::odomCallback, this));
+
+    // Initialize the serial interface
+    serial_interface_ = std::make_shared<SerialInterface>();
 }
 
 MeamrBase::~MeamrBase()
@@ -73,22 +77,19 @@ MeamrBase::~MeamrBase()
     Stop();
 }
 
-
+// 輸出預控制的速度給STM32
 void MeamrBase::cmdVelCallback(const geometry_msgs::msg::Twist::ConstSharedPtr &msg)
 {   
-    // Clamp the linear and angular velocities to the maximum limits
-    des_vel_lin_ = std::clamp(msg->linear.x, -max_vel_x_, max_vel_x_);              // m/s
-    des_vel_theta_ = std::clamp(msg->angular.z, -max_vel_theta_, max_vel_theta_);   // rad/s
+    // 將速度與角速度限制在最大值範圍內
+    des_lin_vel_ = std::clamp(msg->linear.x, -max_vel_x_, max_vel_x_);              // m/s
+    des_theta_vel_ = std::clamp(msg->angular.z, -max_vel_theta_, max_vel_theta_);   // rad/s
 
-    // Compute wheel speeds (m/s) then convert to rad/s
-    // 轉速 = 線速度 / 輪徑
-    // rad/s
-    float left_motor_rpm, right_motor_rpm;
-    kinematic_model_.backward_kinematics(des_vel_lin_, des_vel_theta_, hardware_data_, left_motor_rpm, right_motor_rpm);
-
-    // Convert RPM back to rad/s for internal use
-    des_vel_left_ = left_motor_rpm * (2 * M_PI) / 60;
-    des_vel_right_ = right_motor_rpm * (2 * M_PI) / 60;
+    // 發送速度指令到馬達
+    if (serial_interface_) {
+        serial_interface_->sendMotorCommand(des_lin_vel_, des_theta_vel_);
+    } else {
+        RCLCPP_WARN(this->get_logger(), "Serial interface not initialized.");
+    }
     
 }
 
@@ -102,10 +103,14 @@ int MeamrBase::Init()
 int MeamrBase::Stop()
 {
     // 停止動作，例如停止發送轉速指令
-    des_vel_left_ = 0.0;
-    des_vel_right_ = 0.0;
+    des_lin_vel_ = 0.0;
+    des_theta_vel_ = 0.0;
     // 發送停止指令到馬達
-
+    if (serial_interface_) {
+        serial_interface_->sendMotorCommand(des_lin_vel_, des_theta_vel_);
+    } else {
+        RCLCPP_WARN(this->get_logger(), "Serial interface not initialized.");
+    }
     return 0;
 }
 
@@ -121,7 +126,6 @@ int MeamrBase::ResetMotors()
 
 int MeamrBase::Publish()
 {
-
     odom_.header.stamp = this->now();
     odom_pub_->publish(odom_);
     return 0;
@@ -153,20 +157,27 @@ void MeamrBase::Update()
     now_ = this->now();
     dt_ = (now_ - last_update_time_).seconds();
     last_update_time_ = now_;
-    // Get the wheel velocities from the motor controller by UART/I2C
-    
-    // 模擬 wheel velocities
-    // rad/s
-    double left_wheel_vel_ = des_vel_left_;
-    double right_wheel_vel_ = des_vel_right_;
-    // Wheel velocities 
-    // m/s
 
-    // Based on kinematic model to calculate the linear and angular velocities of the robot
-    double lin_vel ;
-    double theta_vel;
-    // wheel_vel (rad/s) 
-    kinematic_model_.forward_kinematics(left_wheel_vel_, right_wheel_vel_, hardware_data_, lin_vel, theta_vel);
+    double lin_vel = 0.0;
+    double theta_vel = 0.0;
+
+    // 從 serial 接收格式為 "$lin_vel$theta_vel"
+    std::vector<uint8_t> rx_data = serial_interface_->getLatestRx();
+    if (!rx_data.empty()) {
+        std::string data_str(rx_data.begin(), rx_data.end());
+        size_t pos1 = data_str.find('$');
+        size_t pos2 = data_str.find('$', pos1 + 1);
+        if (pos1 == 0 && pos2 != std::string::npos) {
+        try {
+            lin_vel = std::stof(data_str.substr(pos1 + 1, pos2 - pos1 - 1));
+            theta_vel = std::stof(data_str.substr(pos2 + 1));
+        } catch (const std::exception &e) {
+            RCLCPP_WARN(this->get_logger(), "Parse error: %s", e.what());
+        }
+        } else {
+        RCLCPP_WARN(this->get_logger(), "Invalid serial format: %s", data_str.c_str());
+        }
+    }
 
     // Update the wheel position and orientation
     double delta_th = theta_vel * dt_;

@@ -1,0 +1,8 @@
+/**:
+  ros__parameters:
+    # "/dev/ttyUSB0"
+    device_name: /dev/pts/5
+    baud_rate: 115200
+    flow_control: none
+    parity: none
+    stop_bits: "1"
