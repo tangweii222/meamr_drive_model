@@ -98,6 +98,22 @@ int MeamrBase::Stop()
     return 0;
 }
 
+geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw)
+{
+    // Create a quaternion from yaw angle because the robot is 2D
+    // and we only need to represent rotation around the Z-axis
+    // using the tf2 library
+    tf2::Quaternion q;
+    q.setRPY(0, 0, yaw);
+    geometry_msgs::msg::Quaternion q_msg;
+    q_msg.x = q.x();
+    q_msg.y = q.y();
+    q_msg.z = q.z();
+    q_msg.w = q.w();
+    return q_msg;
+}
+
+
 //Odometry 
 void MeamrBase::odomCallback()
 {
@@ -159,17 +175,3 @@ int MeamrBase::Publish()
     return 0;
 }
 
-geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw)
-{
-    // Create a quaternion from yaw angle because the robot is 2D
-    // and we only need to represent rotation around the Z-axis
-    // using the tf2 library
-    tf2::Quaternion q;
-    q.setRPY(0, 0, yaw);
-    geometry_msgs::msg::Quaternion q_msg;
-    q_msg.x = q.x();
-    q_msg.y = q.y();
-    q_msg.z = q.z();
-    q_msg.w = q.w();
-    return q_msg;
-}
