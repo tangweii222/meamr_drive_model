@@ -10,7 +10,6 @@
 #include "meamr_drive_model/meamr_base.hpp"
 #include "meamr_drive_model/vehicle_hardware_data.h"
 #include <math.h>
-// #include "meamr_drive_model/serial_interface.hpp"
 
 MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from_seconds(0.2)) 
 {
@@ -69,7 +68,7 @@ MeamrBase::MeamrBase() : Node("meamr_base_node"),timeout_(rclcpp::Duration::from
         std::bind(&MeamrBase::odomCallback, this));
 
     // Initialize the serial interface
-    serial_interface_ = std::make_shared<SerialInterface>();
+    // serial_interface_ = std::make_shared<SerialInterface>();
 }
 
 MeamrBase::~MeamrBase()
@@ -137,6 +136,12 @@ void MeamrBase::odomCallback()
     Publish();
 }
 
+void MeamrBase::setSerialInterface(std::shared_ptr<SerialInterface> serial)
+{
+  serial_interface_ = serial;
+}
+
+
 geometry_msgs::msg::Quaternion createQuaternionFromYaw(double yaw)
 {
     // Create a quaternion from yaw angle because the robot is 2D
@@ -178,6 +183,7 @@ void MeamrBase::Update()
         RCLCPP_WARN(this->get_logger(), "Invalid serial format: %s", data_str.c_str());
         }
     }
+    
 
     // Update the wheel position and orientation
     double delta_th = theta_vel * dt_;

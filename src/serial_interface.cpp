@@ -12,24 +12,28 @@ SerialInterface::SerialInterface()
 
 void SerialInterface::sendMotorCommand(double lin_vel, double theta_vel)
 {
-  std_msgs::msg::UInt8MultiArray msg;
+    std_msgs::msg::UInt8MultiArray msg;
 
-  std::ostringstream ss;
-  ss << "$" << lin_vel << "$" << theta_vel;
-  std::string data_str = ss.str();
+    std::ostringstream ss;
+    ss << "$" << lin_vel << "$" << theta_vel;
+    std::string data_str = ss.str();
 
-  msg.data.assign(data_str.begin(), data_str.end());
-  serial_write_pub_->publish(msg);
+    msg.data.assign(data_str.begin(), data_str.end());
+    serial_write_pub_->publish(msg);
 }
 
 void SerialInterface::serialReadCallback(const std_msgs::msg::UInt8MultiArray::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(rx_mutex_);
-  last_rx_data_ = msg->data;
+    
+    std::lock_guard<std::mutex> lock(rx_mutex_);
+    last_rx_data_ = msg->data;
+    // RCLCPP_INFO(this->get_logger(), "Received serial_read, size: %ld", msg->data.size());
+
 }
 
 std::vector<uint8_t> SerialInterface::getLatestRx()
 {
   std::lock_guard<std::mutex> lock(rx_mutex_);
+  
   return last_rx_data_;
 }

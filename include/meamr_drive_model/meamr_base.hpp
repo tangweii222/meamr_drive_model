@@ -7,9 +7,8 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "dd_kinematic_model.hpp"
 #include "vehicle_hardware_data.h"
-#include "serial_interface.hpp"
+#include "meamr_drive_model/serial_interface.hpp"
 
-// #include "meamr_drive_model/serial_motors.hpp"
 
 class MeamrBase : public rclcpp::Node
 /**
@@ -67,7 +66,8 @@ public:
      * @brief Updates the odometry information based on the left and right wheel velocities.
      */
     void Update();
-
+    void setSerialInterface(std::shared_ptr<SerialInterface> serial);
+    
 private:
     /**
      * @brief Callback function to receive cmd_vel commands.
@@ -79,6 +79,9 @@ private:
      * @brief Callback function to periodically update odometry information.
      */
     void odomCallback();
+
+    
+
 
     KinematicModel kinematic_model_;
 
